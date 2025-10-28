@@ -324,7 +324,9 @@ app.get('/api/records/filter', (req, res) => {
   }
 
   const startDate = new Date(start).toISOString();
-  const endDate = new Date(end).toISOString();
+  const endDateObj = new Date(end);
+  endDateObj.setUTCHours(23, 59, 59, 999);
+  const endDate = endDateObj.toISOString();
 
   if (type === 'sleep') {
     db.all(
