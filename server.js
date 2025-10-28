@@ -65,12 +65,12 @@ function calculateSleepDuration(startTime, endTime) {
 
 // 工具函数：格式化时间（睡眠/饮食显示用）
 // 格式：xx月xx日xx时
-// 修复：使用 UTC 方法而不是本地时区方法，确保时间一致性
+// 修复：使用本地时区方法，确保显示正确
 function formatDateTime(dateString) {
   const date = new Date(dateString);
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
   return `${month}月${day}日${hours}时`;
 }
 
@@ -218,13 +218,9 @@ app.get('/api/meal-records', (req, res) => {
       }
 
       const records = rows.map(row => {
-        const date = new Date(row.meal_time);
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const hours = String(date.getUTCHours()).padStart(2, '0');
         return {
           id: row.id,
-          display: `${month}月${day}日${hours}时 (${row.meal_type})`
+          display: `${formatDateTime(row.meal_time)} (${row.meal_type})`
         };
       });
 
@@ -313,11 +309,7 @@ app.post('/api/meal-records/custom', (req, res) => {
       if (err) {
         return res.status(500).json({ error: '插入失败' });
       }
-      const date = new Date(meal_time);
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(date.getUTCDate()).padStart(2, '0');
-      const hours = String(date.getUTCHours()).padStart(2, '0');
-      const display = `${month}月${day}日${hours}时 (${type})`;
+      const display = `${formatDateTime(meal_time)} (${type})`;
       res.json({ message: '饮食记录已添加', display: display, id: this.lastID });
     }
   );
@@ -360,13 +352,9 @@ app.get('/api/records/filter', (req, res) => {
           return res.status(500).json({ error: '查询失败' });
         }
         const records = rows.map(row => {
-          const date = new Date(row.meal_time);
-          const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(date.getUTCDate()).padStart(2, '0');
-          const hours = String(date.getUTCHours()).padStart(2, '0');
           return {
             id: row.id,
-            display: `${month}月${day}日${hours}时 (${row.meal_type})`,
+            display: `${formatDateTime(row.meal_time)} (${row.meal_type})`,
             time: row.meal_time,
             type: row.meal_type
           };
@@ -403,7 +391,7 @@ app.get('/api/statistics', (req, res) => {
         totalMinutes += duration.totalMinutes;
 
         const date = new Date(row.sleep_start);
-        const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         if (!sleepByDate[dateStr]) {
           sleepByDate[dateStr] = 0;
         }
