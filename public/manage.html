@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>记录管理 - 睡眠与饮食记录</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+    }
+
+    .back-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .tab-btn {
+      padding: 15px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: #f0f0f0;
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-row.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+      margin-left: 10px;
+    }
+
+    .statistics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .stat-card h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stat-unit {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+
+    .records-list {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    .record-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+
+    .record-item:hover {
+      background: #f8f9fa;
+    }
+
+    .record-item input[type="checkbox"] {
+      width: auto;
+      margin-right: 15px;
+      cursor: pointer;
+    }
+
+    .record-info {
+      flex: 1;
+    }
+
+    .record-text {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .record-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .record-delete {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .record-delete:hover {
+      background: #ff5252;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filter-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .meal-type-select {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .meal-option {
+      padding: 10px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .meal-option:hover {
+      border-color: #667eea;
+    }
+
+    .meal-option.selected {
+      border-color: #667eea;
+      background: #f0f4ff;
+      color: #667eea;
+    }
+
+    /* 视图切换按钮样式 */
+    .view-btn {
+      background: #f0f0f0;
+      color: #666;
+      padding: 10px 16px;
+      font-size: 14px;
+      flex: 1;
+      max-width: 150px;
+    }
+
+    .view-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    /* 周作息表样式 */
+    .schedule-container {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: 40px repeat(7, 1fr);
+      gap: 1px;
+      background: #ddd;
+      border: 1px solid #ddd;
+      min-width: 600px;
+    }
+
+    .schedule-header {
+      background: #667eea;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .schedule-time {
+      background: #f8f9fa;
+      color: #666;
+      padding: 5px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .schedule-cell {
+      background: white;
+      min-height: 30px;
+      position: relative;
+      padding: 2px;
+    }
+
+    .time-block {
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      border-radius: 3px;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .time-block.sleep {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .time-block.meal {
+      background: #4facfe;
+      height: 8px;
+      min-height: 8px;
+    }
+
+    .time-block.tooltip {
+      position: relative;
+    }
+
+    .time-block.tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+      z-index: 10;
+      margin-bottom: 5px;
+    }
+
+    /* 日历视图样式 */
+    .calendar-container {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 20px;
+    }
+
+    .calendar-nav button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .calendar-nav span {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      min-width: 150px;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .calendar-weekday {
+      text-align: center;
+      font-weight: 600;
+      color: #667eea;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70px;
+    }
+
+    .calendar-day:hover {
+      border-color: #667eea;
+      background: #f8f9fa;
+    }
+
+    .calendar-day.other-month {
+      color: #ccc;
+      background: #fafafa;
+    }
+
+    .calendar-day.has-data {
+      background: #f0f4ff;
+      border-color: #667eea;
+    }
+
+    .calendar-day-number {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .calendar-day.other-month .calendar-day-number {
+      color: #ccc;
+    }
+
+    .calendar-indicators {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    .indicator-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .indicator-dot.sleep {
+      background: #667eea;
+    }
+
+    .indicator-dot.meal {
+      background: #4facfe;
+    }
+
+    .calendar-detail {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      min-height: 100px;
+    }
+
+    .calendar-detail-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .calendar-detail-item {
+      padding: 8px 0;
+      font-size: 13px;
+      color: #666;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .calendar-detail-item:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .statistics {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row.three {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-group {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 记录管理</h1>
+      <a href="/" class="back-btn">← 返回主页</a>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('view')">📊 查看统计</button>
+      <button class="tab-btn" onclick="switchTab('add')">➕ 添加记录</button>
+      <button class="tab-btn" onclick="switchTab('delete')">🗑️ 删除记录</button>
+    </div>
+
+    <!-- 查看统计标签页 -->
+    <div id="view-tab" class="tab-content active">
+      <div class="filter-group">
+        <input type="date" id="filterStart" placeholder="开始日期">
+        <input type="date" id="filterEnd" placeholder="结束日期">
+        <select id="filterType">
+          <option value="all">所有记录</option>
+          <option value="sleep">睡眠记录</option>
+          <option value="meal">饮食记录</option>
+        </select>
+        <button onclick="loadStatistics()">查询</button>
+      </div>
+
+      <div class="statistics" id="statistics"></div>
+
+      <!-- 视图切换按钮 -->
+      <div style="display: flex; gap: 10px; margin-top: 30px; margin-bottom: 20px;">
+        <button class="view-btn active" onclick="switchViewType('list')">📋 列表视图</button>
+        <button class="view-btn" onclick="switchViewType('schedule')">📊 周作息表</button>
+        <button class="view-btn" onclick="switchViewType('calendar')">📅 月历视图</button>
+      </div>
+
+      <!-- 列表视图 -->
+      <div id="listView" class="view-container active">
+        <h3 style="margin-bottom: 15px;">记录详情</h3>
+        <div class="records-list" id="filterResults"></div>
+      </div>
+
+      <!-- 周作息表视图 -->
+      <div id="scheduleView" class="view-container" style="display: none;">
+        <h3 style="margin-bottom: 15px;">周作息表</h3>
+        <div class="schedule-container">
+          <div id="weeklySchedule"></div>
+        </div>
+      </div>
+
+      <!-- 日历视图 -->
+      <div id="calendarView" class="view-container" style="display: none;">
+        <h3 style="margin-bottom: 15px;">月历视图</h3>
+        <div class="calendar-container">
+          <div class="calendar-nav">
+            <button onclick="previousMonth()">‹ 上月</button>
+            <span id="calendarMonth"></span>
+            <button onclick="nextMonth()">下月 ›</button>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="calendarDetail" class="calendar-detail"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加记录标签页 -->
+    <div id="add-tab" class="tab-content">
+      <h3 style="margin-bottom: 20px;">添加睡眠记录</h3>
+      <div class="form-row three">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="sleepDate">
+        </div>
+        <div class="form-group">
+          <label>开始时间</label>
+          <input type="time" id="sleepStart">
+        </div>
+        <div class="form-group">
+          <label>结束时间</label>
+          <input type="time" id="sleepEnd">
+        </div>
+      </div>
+      <button onclick="addSleepRecord()">添加睡眠记录</button>
+
+      <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
+
+      <h3 style="margin-bottom: 20px;">添加饮食记录</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="mealDate">
+        </div>
+        <div class="form-group">
+          <label>时间</label>
+          <input type="time" id="mealTime">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>饮食类型</label>
+        <div class="meal-type-select">
+          <div class="meal-option" onclick="selectMealType(this, '早餐')">早餐</div>
+          <div class="meal-option" onclick="selectMealType(this, '午餐')">午餐</div>
+          <div class="meal-option" onclick="selectMealType(this, '晚餐')">晚餐</div>
+          <div class="meal-option" onclick="selectMealType(this, '加餐')">加餐</div>
+          <div class="meal-option" onclick="selectMealType(this, '饮水')">饮水</div>
+          <div class="meal-option" onclick="selectMealType(this, '其他')">其他</div>
+        </div>
+      </div>
+      <button onclick="addMealRecord()" style="margin-top: 20px;">添加饮食记录</button>
+
+      <div id="addMessage" style="margin-top: 20px; padding: 15px; border-radius: 8px; display: none;"></div>
+    </div>
+
+    <!-- 删除记录标签页 -->
+    <div id="delete-tab" class="tab-content">
+      <div class="action-bar">
+        <select id="deleteType">
+          <option value="sleep">睡眠记录</option>
+          <option value="meal">饮食记录</option>
+        </select>
+        <button onclick="loadDeleteList()">加载记录</button>
+        <button class="btn-secondary" onclick="toggleSelectAll()">全选</button>
+        <button class="btn-secondary" style="background: #ff6b6b; color: white;" onclick="deleteSelected()">删除选中</button>
+      </div>
+
+      <div class="records-list" id="deleteRecordsList"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentMealType = '早餐';
+    let selectedRecords = new Set();
+
+    // 初始化
+    function init() {
+      const today = new Date().toISOString().split('T')[0];
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      document.getElementById('filterStart').value = sevenDaysAgo.toISOString().split('T')[0];
+      document.getElementById('filterEnd').value = today;
+      document.getElementById('mealDate').value = today;
+      document.getElementById('sleepDate').value = today;
+
+      // 设置默认时间
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('mealTime').value = timeStr;
+      document.getElementById('sleepStart').value = timeStr;
+      document.getElementById('sleepEnd').value = timeStr;
+
+      loadStatistics();
+    }
+
+    // 切换标签页
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tab + '-tab').classList.add('active');
+      event.target.classList.add('active');
+
+      if (tab === 'delete') {
+        loadDeleteList();
+      }
+    }
+
+    // 加载统计数据
+    async function loadStatistics() {
+      const start = document.getElementById('filterStart').value;
+      const end = document.getElementById('filterEnd').value;
+      const type = document.getElementById('filterType').value;
+
+      try {
+        // 计算天数
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+        const response = await fetch(`/api/statistics?days=${days}`);
+        const stats = await response.json();
+
+        // 显示统计卡片
+        let statsHtml = '';
+        if (type === 'sleep' || type === 'all') {
+          statsHtml += `
+            <div class="stat-card">
+              <h3>睡眠记录数</h3>
+              <div class="stat-value">${stats.sleep.totalRecords}</div>
+              <div class="stat-unit">条记录</div>
+            </div>
+            <div class="stat-card">
+              <h3>平均睡眠时长</h3>
+              <div class="stat-value">${stats.sleep.avgHours}</div>
+              <div class="stat-unit">小时</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #4facfe;">
+              <h3>总睡眠时长</h3>
+              <div class="stat-value">${stats.sleep.totalHours}</div>
+              <div class="stat-unit">小时</div>
+            </div>
+          `;
+        }
+        if (type === 'meal' || type === 'all') {
+          statsHtml += `
+            <div class="stat-card" style="border-left-color: #ffd93d;">
+              <h3>饮食记录数</h3>
+              <div class="stat-value">${stats.meals.totalRecords}</div>
+              <div class="stat-unit">条记录</div>
+            </div>
+          `;
+        }
+
+        document.getElementById('statistics').innerHTML = statsHtml;
+
+        // 加载详细记录
+        await loadFilteredRecords(start, end, type);
+      } catch (error) {
+        console.error('加载统计失败:', error);
+      }
+    }
+
+    // 加载筛选后的记录
+    async function loadFilteredRecords(start, end, type) {
+      try {
+        let html = '';
+
+        if (type === 'sleep' || type === 'all') {
+          const response = await fetch(`/api/records/filter?type=sleep&start=${start}&end=${end}`);
+          const records = await response.json();
+          if (records.length > 0) {
+            html += '<h4 style="margin-bottom: 15px; margin-top: 20px; color: #667eea;">睡眠记录</h4>';
+            records.forEach(record => {
+              html += `<div class="record-item">
+                <div class="record-info">
+                  <div class="record-text">${record.display}</div>
+                </div>
+              </div>`;
+            });
+          }
+        }
+
+        if (type === 'meal' || type === 'all') {
+          const response = await fetch(`/api/records/filter?type=meal&start=${start}&end=${end}`);
+          const records = await response.json();
+          if (records.length > 0) {
+            html += '<h4 style="margin-bottom: 15px; margin-top: 20px; color: #4facfe;">饮食记录</h4>';
+            records.forEach(record => {
+              html += `<div class="record-item">
+                <div class="record-info">
+                  <div class="record-text">${record.display}</div>
+                </div>
+              </div>`;
+            });
+          }
+        }
+
+        if (html === '') {
+          html = '<div class="empty-state">没有找到符合条件的记录</div>';
+        }
+
+        document.getElementById('filterResults').innerHTML = html;
+      } catch (error) {
+        console.error('加载记录失败:', error);
+      }
+    }
+
+    // 添加睡眠记录
+    async function addSleepRecord() {
+      const date = document.getElementById('sleepDate').value;
+      const start = document.getElementById('sleepStart').value;
+      const end = document.getElementById('sleepEnd').value;
+
+      if (!date || !start || !end) {
+        alert('请填写所有字段');
+        return;
+      }
+
+      // 修复时区问题：正确处理本地时间转 UTC
+      const localStart = new Date(`${date}T${start}`);
+      const offset = localStart.getTimezoneOffset();
+      const sleepStart = new Date(localStart.getTime() - offset * 60 * 1000).toISOString();
+
+      const localEnd = new Date(`${date}T${end}`);
+      const sleepEnd = new Date(localEnd.getTime() - offset * 60 * 1000).toISOString();
+
+      try {
+        const response = await fetch('/api/sleep-records/custom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sleep_start: sleepStart, sleep_end: sleepEnd })
+        });
+        const result = await response.json();
+
+        showMessage(`✅ ${result.display}`, 'success');
+        init(); // 重置表单和刷新统计
+      } catch (error) {
+        showMessage('❌ 添加失败', 'error');
+      }
+    }
+
+    // 添加饮食记录
+    async function addMealRecord() {
+      const date = document.getElementById('mealDate').value;
+      const time = document.getElementById('mealTime').value;
+
+      if (!date || !time) {
+        alert('请填写所有字段');
+        return;
+      }
+
+      // 修复时区问题：正确处理本地时间转 UTC
+      const localDate = new Date(`${date}T${time}`);
+      const offset = localDate.getTimezoneOffset();
+      const mealTime = new Date(localDate.getTime() - offset * 60 * 1000).toISOString();
+
+      try {
+        const response = await fetch('/api/meal-records/custom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ meal_time: mealTime, meal_type: currentMealType })
+        });
+        const result = await response.json();
+
+        showMessage(`✅ ${result.display}`, 'success');
+        init(); // 重置表单
+      } catch (error) {
+        showMessage('❌ 添加失败', 'error');
+      }
+    }
+
+    // 选择饮食类型
+    function selectMealType(element, type) {
+      document.querySelectorAll('.meal-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      currentMealType = type;
+    }
+
+    // 显示消息
+    function showMessage(text, type) {
+      const msgEl = document.getElementById('addMessage');
+      msgEl.textContent = text;
+      msgEl.style.background = type === 'success' ? '#e8f5e9' : '#ffebee';
+      msgEl.style.color = type === 'success' ? '#2e7d32' : '#c62828';
+      msgEl.style.display = 'block';
+      setTimeout(() => {
+        msgEl.style.display = 'none';
+      }, 3000);
+    }
+
+    // 加载删除列表
+    async function loadDeleteList() {
+      const type = document.getElementById('deleteType').value;
+      selectedRecords.clear();
+
+      try {
+        let html = '';
+        if (type === 'sleep') {
+          const response = await fetch('/api/sleep-records?limit=100');
+          const records = await response.json();
+          if (records.length === 0) {
+            html = '<div class="empty-state">没有睡眠记录</div>';
+          } else {
+            records.forEach(record => {
+              html += `<div class="record-item">
+                <input type="checkbox" onchange="toggleRecord('${record.id}', '${type}', this)">
+                <div class="record-info">
+                  <div class="record-text">${record.display}</div>
+                </div>
+              </div>`;
+            });
+          }
+        } else {
+          const response = await fetch('/api/meal-records?limit=100');
+          const records = await response.json();
+          if (records.length === 0) {
+            html = '<div class="empty-state">没有饮食记录</div>';
+          } else {
+            records.forEach(record => {
+              html += `<div class="record-item">
+                <input type="checkbox" onchange="toggleRecord('${record.id}', '${type}', this)">
+                <div class="record-info">
+                  <div class="record-text">${record.display}</div>
+                </div>
+              </div>`;
+            });
+          }
+        }
+        document.getElementById('deleteRecordsList').innerHTML = html;
+      } catch (error) {
+        console.error('加载列表失败:', error);
+      }
+    }
+
+    // 切换选中记录
+    function toggleRecord(id, type, checkbox) {
+      const key = `${type}:${id}`;
+      if (checkbox.checked) {
+        selectedRecords.add(key);
+      } else {
+        selectedRecords.delete(key);
+      }
+    }
+
+    // 全选
+    function toggleSelectAll() {
+      const checkboxes = document.querySelectorAll('#deleteRecordsList input[type="checkbox"]');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        cb.onchange();
+      });
+    }
+
+    // 删除选中
+    async function deleteSelected() {
+      if (selectedRecords.size === 0) {
+        alert('请选择要删除的记录');
+        return;
+      }
+
+      if (!confirm(`确定要删除 ${selectedRecords.size} 条记录吗？`)) {
+        return;
+      }
+
+      try {
+        for (const key of selectedRecords) {
+          const [type, id] = key.split(':');
+          const endpoint = type === 'sleep' ? '/api/sleep-records' : '/api/meal-records';
+          await fetch(`${endpoint}/${id}`, { method: 'DELETE' });
+        }
+        alert('删除成功');
+        selectedRecords.clear();
+        loadDeleteList();
+      } catch (error) {
+        console.error('删除失败:', error);
+        alert('删除失败');
+      }
+    }
+
+    // ========================= 新增：时间表功能 =========================
+
+    let currentCalendarDate = new Date();
+    let allRecordsData = {}; // 缓存所有记录数据
+
+    // 切换视图类型
+    function switchViewType(type) {
+      // 更新按钮状态
+      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // 隐藏所有视图
+      document.querySelectorAll('.view-container').forEach(view => view.style.display = 'none');
+
+      // 显示选中的视图
+      if (type === 'list') {
+        document.getElementById('listView').style.display = 'block';
+      } else if (type === 'schedule') {
+        document.getElementById('scheduleView').style.display = 'block';
+        renderWeeklySchedule();
+      } else if (type === 'calendar') {
+        document.getElementById('calendarView').style.display = 'block';
+        renderCalendar(currentCalendarDate.getUTCFullYear(), currentCalendarDate.getUTCMonth());
+      }
+    }
+
+    // 渲染周作息表
+    async function renderWeeklySchedule() {
+      const start = document.getElementById('filterStart').value;
+      const end = document.getElementById('filterEnd').value;
+
+      try {
+        const sleepRes = await fetch(`/api/records/filter?type=sleep&start=${start}&end=${end}`);
+        const sleepRecords = await sleepRes.json();
+
+        const mealRes = await fetch(`/api/records/filter?type=meal&start=${start}&end=${end}`);
+        const mealRecords = await mealRes.json();
+
+        // 构建时间表数据结构：按小时统计
+        const scheduleData = {}; // {hour: {Mon: {...}, Tue: {...}, ...}}
+        for (let i = 0; i < 24; i++) {
+          scheduleData[i] = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
+        }
+
+        // 填入睡眠数据
+        sleepRecords.forEach(record => {
+          if (!record.time) return;
+          const startTime = new Date(record.time);
+          const endTime = new Date(record.display.split('-')[1] ? new Date(record.display.match(/\d{2}:\d{2}/)[0]) : startTime);
+
+          const startHour = startTime.getUTCHours();
+          const dayOfWeek = startTime.getUTCDay() === 0 ? 6 : startTime.getUTCDay() - 1;
+
+          if (scheduleData[startHour]) {
+            scheduleData[startHour][dayOfWeek].push({
+              type: 'sleep',
+              display: record.display
+            });
+          }
+        });
+
+        // 填入饮食数据
+        mealRecords.forEach(record => {
+          if (!record.time) return;
+          const time = new Date(record.time);
+          const hour = time.getUTCHours();
+          const dayOfWeek = time.getUTCDay() === 0 ? 6 : time.getUTCDay() - 1;
+
+          if (scheduleData[hour]) {
+            scheduleData[hour][dayOfWeek].push({
+              type: 'meal',
+              display: record.display
+            });
+          }
+        });
+
+        // 渲染表格
+        const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        let html = '<div class="schedule-grid">';
+
+        // 表头
+        html += '<div class="schedule-header" style="grid-column: 1;"></div>';
+        weekDays.forEach(day => {
+          html += `<div class="schedule-header">${day}</div>`;
+        });
+
+        // 行数据（0-23小时）
+        for (let hour = 0; hour < 24; hour++) {
+          html += `<div class="schedule-time">${String(hour).padStart(2, '0')}:00</div>`;
+
+          for (let day = 0; day < 7; day++) {
+            html += '<div class="schedule-cell">';
+
+            const items = scheduleData[hour][day];
+            if (items.length > 0) {
+              items.forEach((item, idx) => {
+                if (item.type === 'sleep') {
+                  html += `<div class="time-block sleep" style="top: ${idx * 15}px; height: 12px;" title="${item.display}"></div>`;
+                } else {
+                  html += `<div class="time-block meal" style="top: ${idx * 10}px;" title="${item.display}"></div>`;
+                }
+              });
+            }
+
+            html += '</div>';
+          }
+        }
+
+        html += '</div>';
+        document.getElementById('weeklySchedule').innerHTML = html;
+      } catch (error) {
+        console.error('渲染周作息表失败:', error);
+        document.getElementById('weeklySchedule').innerHTML = '<div class="empty-state">加载失败</div>';
+      }
+    }
+
+    // 渲染日历
+    async function renderCalendar(year, month) {
+      currentCalendarDate = new Date(Date.UTC(year, month, 1));
+      const start = document.getElementById('filterStart').value;
+      const end = document.getElementById('filterEnd').value;
+
+      try {
+        // 加载所有数据
+        const sleepRes = await fetch(`/api/records/filter?type=sleep&start=${start}&end=${end}`);
+        const sleepRecords = await sleepRes.json();
+
+        const mealRes = await fetch(`/api/records/filter?type=meal&start=${start}&end=${end}`);
+        const mealRecords = await mealRes.json();
+
+        // 按日期分组记录
+        const recordsByDate = {};
+
+        sleepRecords.forEach(record => {
+          if (record.time) {
+            const date = new Date(record.time);
+            const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+            if (!recordsByDate[dateStr]) recordsByDate[dateStr] = { sleep: [], meal: [] };
+            recordsByDate[dateStr].sleep.push(record);
+          }
+        });
+
+        mealRecords.forEach(record => {
+          if (record.time) {
+            const date = new Date(record.time);
+            const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+            if (!recordsByDate[dateStr]) recordsByDate[dateStr] = { sleep: [], meal: [] };
+            recordsByDate[dateStr].meal.push(record);
+          }
+        });
+
+        allRecordsData = recordsByDate;
+
+        // 生成日历HTML
+        const firstDay = new Date(Date.UTC(year, month, 1));
+        const lastDay = new Date(Date.UTC(year, month + 1, 0));
+        const prevLastDay = new Date(Date.UTC(year, month, 0));
+
+        const startDate = new Date(firstDay);
+        startDate.setUTCDate(startDate.getUTCDate() - firstDay.getUTCDay());
+
+        let html = '';
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        weekDays.forEach(day => {
+          html += `<div class="calendar-weekday">${day}</div>`;
+        });
+
+        // 生成日期单元格
+        let currentDate = new Date(startDate);
+        for (let i = 0; i < 42; i++) {
+          const isCurrentMonth = currentDate.getUTCMonth() === month;
+          const dateStr = `${currentDate.getUTCFullYear()}-${String(currentDate.getUTCMonth() + 1).padStart(2, '0')}-${String(currentDate.getUTCDate()).padStart(2, '0')}`;
+          const hasData = recordsByDate[dateStr] && (recordsByDate[dateStr].sleep.length > 0 || recordsByDate[dateStr].meal.length > 0);
+
+          let cellClass = 'calendar-day';
+          if (!isCurrentMonth) cellClass += ' other-month';
+          if (hasData) cellClass += ' has-data';
+
+          html += `<div class="${cellClass}" onclick="showDayDetails('${dateStr}')" style="cursor: pointer;">
+            <div class="calendar-day-number">${currentDate.getUTCDate()}</div>`;
+
+          if (hasData) {
+            html += '<div class="calendar-indicators">';
+            if (recordsByDate[dateStr].sleep.length > 0) {
+              html += '<div class="indicator-dot sleep" title="睡眠"></div>';
+            }
+            if (recordsByDate[dateStr].meal.length > 0) {
+              html += '<div class="indicator-dot meal" title="饮食"></div>';
+            }
+            html += '</div>';
+          }
+
+          html += '</div>';
+          currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+        }
+
+        document.getElementById('calendarGrid').innerHTML = html;
+
+        // 更新月份显示
+        const monthStr = `${year}年 ${month + 1}月`;
+        document.getElementById('calendarMonth').textContent = monthStr;
+
+        // 显示今天或第一条记录的详情
+        const today = new Date();
+        const todayStr = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-${String(today.getUTCDate()).padStart(2, '0')}`;
+        showDayDetails(todayStr);
+
+      } catch (error) {
+        console.error('渲染日历失败:', error);
+        document.getElementById('calendarGrid').innerHTML = '<div class="empty-state">加载失败</div>';
+      }
+    }
+
+    // 显示特定日期的详情
+    function showDayDetails(dateStr) {
+      const data = allRecordsData[dateStr];
+      let html = '';
+
+      if (!data || (data.sleep.length === 0 && data.meal.length === 0)) {
+        html = '<div class="calendar-detail-title">' + dateStr + '</div><div style="color: #999; font-size: 13px;">暂无记录</div>';
+      } else {
+        const dateObj = new Date(dateStr + 'T00:00:00Z');
+        const dateDisplay = `${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}月${String(dateObj.getUTCDate()).padStart(2, '0')}日`;
+        html = `<div class="calendar-detail-title">${dateDisplay}</div>`;
+
+        if (data.sleep.length > 0) {
+          html += '<div style="margin-bottom: 10px;"><strong style="color: #667eea;">睡眠记录：</strong></div>';
+          data.sleep.forEach(record => {
+            html += `<div class="calendar-detail-item">${record.display}</div>`;
+          });
+        }
+
+        if (data.meal.length > 0) {
+          html += '<div style="margin-top: 10px; margin-bottom: 10px;"><strong style="color: #4facfe;">饮食记录：</strong></div>';
+          data.meal.forEach(record => {
+            html += `<div class="calendar-detail-item">${record.display}</div>`;
+          });
+        }
+      }
+
+      document.getElementById('calendarDetail').innerHTML = html;
+    }
+
+    // 上月
+    function previousMonth() {
+      currentCalendarDate.setUTCMonth(currentCalendarDate.getUTCMonth() - 1);
+      renderCalendar(currentCalendarDate.getUTCFullYear(), currentCalendarDate.getUTCMonth());
+    }
+
+    // 下月
+    function nextMonth() {
+      currentCalendarDate.setUTCMonth(currentCalendarDate.getUTCMonth() + 1);
+      renderCalendar(currentCalendarDate.getUTCFullYear(), currentCalendarDate.getUTCMonth());
+    }
+
+    // 页面加载
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

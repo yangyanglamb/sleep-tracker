@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>睡眠和饮食记录</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .button-group.full {
+      grid-template-columns: 1fr;
+    }
+
+    button {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .btn-sleep {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-sleep:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-wake {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .btn-wake:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+    }
+
+    .btn-meal {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .btn-meal:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-box {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .status-box.sleeping {
+      border-left-color: #f5576c;
+      background: #fff5f7;
+    }
+
+    .status-box.awake {
+      border-left-color: #667eea;
+      background: #f8f9fa;
+    }
+
+    .records-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 15px;
+      background: #fafafa;
+    }
+
+    .record-item {
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
+      border-left: 4px solid #667eea;
+      animation: slideIn 0.3s ease;
+    }
+
+    .record-item.meal {
+      border-left-color: #4facfe;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .meal-type-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .meal-btn {
+      padding: 8px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+      color: #666;
+    }
+
+    .meal-btn.active {
+      border-color: #4facfe;
+      background: #e3f2fd;
+      color: #4facfe;
+    }
+
+    .meal-btn:hover {
+      border-color: #4facfe;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 15px;
+      }
+
+      h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      button {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
+      .button-group {
+        gap: 10px;
+      }
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 10px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✨ 睡眠与饮食记录</h1>
+
+    <!-- 睡眠部分 -->
+    <div class="section">
+      <div class="section-title">睡眠管理</div>
+      <div class="status-box awake" id="sleepStatus">
+        当前状态: 清醒
+      </div>
+      <div class="button-group">
+        <button class="btn-sleep" onclick="startSleep()">😴 睡觉</button>
+        <button class="btn-wake" onclick="endSleep()">🌅 起床</button>
+      </div>
+    </div>
+
+    <!-- 吃饭部分 -->
+    <div class="section">
+      <div class="section-title">饮食记录</div>
+      <div class="meal-type-selector">
+        <button class="meal-btn active" data-meal="早餐" onclick="selectMealType(this)">早餐</button>
+        <button class="meal-btn" data-meal="午餐" onclick="selectMealType(this)">午餐</button>
+        <button class="meal-btn" data-meal="晚餐" onclick="selectMealType(this)">晚餐</button>
+        <button class="meal-btn" data-meal="加餐" onclick="selectMealType(this)">加餐</button>
+        <button class="meal-btn" data-meal="饮水" onclick="selectMealType(this)">饮水</button>
+        <button class="meal-btn" data-meal="其他" onclick="selectMealType(this)">其他</button>
+      </div>
+      <button class="btn-meal" style="width: 100%;" onclick="recordMeal()">🍽️ 记录吃饭</button>
+    </div>
+
+    <!-- 标签页切换 -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('sleep')">睡眠记录</button>
+      <button class="tab-btn" onclick="switchTab('meal')">饮食记录</button>
+    </div>
+
+    <!-- 睡眠记录 -->
+    <div id="sleepTab" class="tab-content active">
+      <div class="records-container" id="sleepRecords">
+        <div class="empty-state">暂无睡眠记录</div>
+      </div>
+    </div>
+
+    <!-- 吃饭记录 -->
+    <div id="mealTab" class="tab-content">
+      <div class="records-container" id="mealRecords">
+        <div class="empty-state">暂无饮食记录</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="/manage.html" style="display: inline-block; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">📋 管理记录</a>
+    </div>
+  </div>
+
+  <script>
+    let currentMealType = '早餐';
+
+    // 初始化
+    async function init() {
+      await updateSleepStatus();
+      await loadSleepRecords();
+      await loadMealRecords();
+      // 每30秒刷新一次数据
+      setInterval(async () => {
+        await updateSleepStatus();
+        await loadSleepRecords();
+        await loadMealRecords();
+      }, 30000);
+    }
+
+    // 开始睡眠
+    async function startSleep() {
+      try {
+        const response = await fetch('/api/sleep-start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        await updateSleepStatus();
+        console.log(data.message);
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 结束睡眠
+    async function endSleep() {
+      try {
+        const response = await fetch('/api/sleep-end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await response.json();
+        await updateSleepStatus();
+        await loadSleepRecords();
+        if (data.display) {
+          console.log('睡眠记录:', data.display);
+        }
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 记录吃饭
+    async function recordMeal() {
+      try {
+        const response = await fetch('/api/meal-record', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mealType: currentMealType })
+        });
+        const data = await response.json();
+        await loadMealRecords();
+        console.log(data.message);
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 更新睡眠状态
+    async function updateSleepStatus() {
+      try {
+        const response = await fetch('/api/sleep-status');
+        const data = await response.json();
+        const statusBox = document.getElementById('sleepStatus');
+
+        if (data.isSleeping) {
+          const startTime = new Date(data.startTime);
+          const now = new Date();
+          const diffMinutes = Math.floor((now - startTime) / (1000 * 60));
+
+          let timeText = '';
+          if (diffMinutes < 60) {
+            timeText = `已睡${diffMinutes}分钟`;
+          } else {
+            const hours = Math.floor(diffMinutes / 60);
+            const minutes = diffMinutes % 60;
+            if (minutes === 0) {
+              timeText = `已睡${hours}小时`;
+            } else {
+              timeText = `已睡${hours}小时${minutes}分钟`;
+            }
+          }
+
+          statusBox.textContent = `🛌 正在睡眠 - ${timeText}`;
+          statusBox.className = 'status-box sleeping';
+        } else {
+          statusBox.textContent = '当前状态: 清醒';
+          statusBox.className = 'status-box awake';
+        }
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 加载睡眠记录
+    async function loadSleepRecords() {
+      try {
+        const response = await fetch('/api/sleep-records');
+        const records = await response.json();
+        const container = document.getElementById('sleepRecords');
+
+        if (records.length === 0) {
+          container.innerHTML = '<div class="empty-state">暂无睡眠记录</div>';
+          return;
+        }
+
+        container.innerHTML = records.map(record =>
+          `<div class="record-item">${record.display}</div>`
+        ).join('');
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 加载吃饭记录
+    async function loadMealRecords() {
+      try {
+        const response = await fetch('/api/meal-records');
+        const records = await response.json();
+        const container = document.getElementById('mealRecords');
+
+        if (records.length === 0) {
+          container.innerHTML = '<div class="empty-state">暂无饮食记录</div>';
+          return;
+        }
+
+        container.innerHTML = records.map(record =>
+          `<div class="record-item meal">${record.display}</div>`
+        ).join('');
+      } catch (error) {
+        console.error('错误:', error);
+      }
+    }
+
+    // 选择吃饭类型
+    function selectMealType(button) {
+      document.querySelectorAll('.meal-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      button.classList.add('active');
+      currentMealType = button.getAttribute('data-meal');
+    }
+
+    // 切换标签页
+    function switchTab(tab) {
+      // 更新标签按钮
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // 更新内容
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(tab + 'Tab').classList.add('active');
+    }
+
+    // 页面加载时初始化
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
