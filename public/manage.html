@@ -847,13 +847,8 @@
         return;
       }
 
-      // 修复时区问题：正确处理本地时间转 UTC
-      const localStart = new Date(`${date}T${start}`);
-      const offset = localStart.getTimezoneOffset();
-      const sleepStart = new Date(localStart.getTime() - offset * 60 * 1000).toISOString();
-
-      const localEnd = new Date(`${date}T${end}`);
-      const sleepEnd = new Date(localEnd.getTime() - offset * 60 * 1000).toISOString();
+      const sleepStart = `${date}T${start}:00+08:00`;
+      const sleepEnd = `${date}T${end}:00+08:00`;
 
       try {
         const response = await fetch('/api/sleep-records/custom', {
@@ -880,10 +875,7 @@
         return;
       }
 
-      // 修复时区问题：正确处理本地时间转 UTC
-      const localDate = new Date(`${date}T${time}`);
-      const offset = localDate.getTimezoneOffset();
-      const mealTime = new Date(localDate.getTime() - offset * 60 * 1000).toISOString();
+      const mealTime = `${date}T${time}:00+08:00`;
 
       try {
         const response = await fetch('/api/meal-records/custom', {
@@ -1055,8 +1047,8 @@
 
         // 填入睡眠数据
         sleepRecords.forEach(record => {
-          if (!record.time) return;
-          const startTime = new Date(record.time);
+          if (!record.start) return;
+          const startTime = new Date(record.start);
           const endTime = new Date(record.display.split('-')[1] ? new Date(record.display.match(/\d{2}:\d{2}/)[0]) : startTime);
 
           const startHour = startTime.getUTCHours();
@@ -1143,8 +1135,8 @@
         const recordsByDate = {};
 
         sleepRecords.forEach(record => {
-          if (record.time) {
-            const date = new Date(record.time);
+          if (record.start) {
+            const date = new Date(record.start);
             const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
             if (!recordsByDate[dateStr]) recordsByDate[dateStr] = { sleep: [], meal: [] };
             recordsByDate[dateStr].sleep.push(record);
