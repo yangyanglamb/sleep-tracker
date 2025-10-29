@@ -602,7 +602,6 @@
       <!-- 视图切换按钮 -->
       <div style="display: flex; gap: 10px; margin-top: 30px; margin-bottom: 20px;">
         <button class="view-btn active" onclick="switchViewType('list')">📋 列表视图</button>
-        <button class="view-btn" onclick="switchViewType('schedule')">📊 周作息表</button>
         <button class="view-btn" onclick="switchViewType('calendar')">📅 月历视图</button>
       </div>
 
@@ -610,14 +609,6 @@
       <div id="listView" class="view-container active">
         <h3 style="margin-bottom: 15px;">记录详情</h3>
         <div class="records-list" id="filterResults"></div>
-      </div>
-
-      <!-- 周作息表视图 -->
-      <div id="scheduleView" class="view-container" style="display: none;">
-        <h3 style="margin-bottom: 15px;">周作息表</h3>
-        <div class="schedule-container">
-          <div id="weeklySchedule"></div>
-        </div>
       </div>
 
       <!-- 日历视图 -->
@@ -843,7 +834,7 @@
       const end = document.getElementById('sleepEnd').value;
 
       if (!date || !start || !end) {
-        alert('请填写所有字段');
+        showMessage('请填写所有字段', 'error');
         return;
       }
 
@@ -871,7 +862,7 @@
       const time = document.getElementById('mealTime').value;
 
       if (!date || !time) {
-        alert('请填写所有字段');
+        showMessage('请填写所有字段', 'error');
         return;
       }
 
@@ -1005,117 +996,6 @@
 
     let currentCalendarDate = new Date();
     let allRecordsData = {}; // 缓存所有记录数据
-
-    // 切换视图类型
-    function switchViewType(type) {
-      // 更新按钮状态
-      document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      // 隐藏所有视图
-      document.querySelectorAll('.view-container').forEach(view => view.style.display = 'none');
-
-      // 显示选中的视图
-      if (type === 'list') {
-        document.getElementById('listView').style.display = 'block';
-      } else if (type === 'schedule') {
-        document.getElementById('scheduleView').style.display = 'block';
-        renderWeeklySchedule();
-      } else if (type === 'calendar') {
-        document.getElementById('calendarView').style.display = 'block';
-        renderCalendar(currentCalendarDate.getUTCFullYear(), currentCalendarDate.getUTCMonth());
-      }
-    }
-
-    // 渲染周作息表
-    async function renderWeeklySchedule() {
-      const start = document.getElementById('filterStart').value;
-      const end = document.getElementById('filterEnd').value;
-
-      try {
-        const sleepRes = await fetch(`/api/records/filter?type=sleep&start=${start}&end=${end}`);
-        const sleepRecords = await sleepRes.json();
-
-        const mealRes = await fetch(`/api/records/filter?type=meal&start=${start}&end=${end}`);
-        const mealRecords = await mealRes.json();
-
-        // 构建时间表数据结构：按小时统计
-        const scheduleData = {}; // {hour: {Mon: {...}, Tue: {...}, ...}}
-        for (let i = 0; i < 24; i++) {
-          scheduleData[i] = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
-        }
-
-        // 填入睡眠数据
-        sleepRecords.forEach(record => {
-          if (!record.start) return;
-          const startTime = new Date(record.start);
-          const endTime = new Date(record.display.split('-')[1] ? new Date(record.display.match(/\d{2}:\d{2}/)[0]) : startTime);
-
-          const startHour = startTime.getUTCHours();
-          const dayOfWeek = startTime.getUTCDay() === 0 ? 6 : startTime.getUTCDay() - 1;
-
-          if (scheduleData[startHour]) {
-            scheduleData[startHour][dayOfWeek].push({
-              type: 'sleep',
-              display: record.display
-            });
-          }
-        });
-
-        // 填入饮食数据
-        mealRecords.forEach(record => {
-          if (!record.time) return;
-          const time = new Date(record.time);
-          const hour = time.getUTCHours();
-          const dayOfWeek = time.getUTCDay() === 0 ? 6 : time.getUTCDay() - 1;
-
-          if (scheduleData[hour]) {
-            scheduleData[hour][dayOfWeek].push({
-              type: 'meal',
-              display: record.display
-            });
-          }
-        });
-
-        // 渲染表格
-        const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        let html = '<div class="schedule-grid">';
-
-        // 表头
-        html += '<div class="schedule-header" style="grid-column: 1;"></div>';
-        weekDays.forEach(day => {
-          html += `<div class="schedule-header">${day}</div>`;
-        });
-
-        // 行数据（0-23小时）
-        for (let hour = 0; hour < 24; hour++) {
-          html += `<div class="schedule-time">${String(hour).padStart(2, '0')}:00</div>`;
-
-          for (let day = 0; day < 7; day++) {
-            html += '<div class="schedule-cell">';
-
-            const items = scheduleData[hour][day];
-            if (items.length > 0) {
-              items.forEach((item, idx) => {
-                if (item.type === 'sleep') {
-                  html += `<div class="time-block sleep" style="top: ${idx * 15}px; height: 12px;" title="${item.display}"></div>`;
-                } else {
-                  html += `<div class="time-block meal" style="top: ${idx * 10}px;" title="${item.display}"></div>`;
-                }
-              });
-            }
-
-            html += '</div>';
-          }
-        }
-
-        html += '</div>';
-        document.getElementById('weeklySchedule').innerHTML = html;
-      } catch (error) {
-        console.error('渲染周作息表失败:', error);
-        document.getElementById('weeklySchedule').innerHTML = '<div class="empty-state">加载失败</div>';
-      }
-    }
 
     // 渲染日历
     async function renderCalendar(year, month) {
